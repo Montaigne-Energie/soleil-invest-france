@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, TrendingUp, Users, MapPin, Award, ArrowRight } from "lucide-react";
+import { TrendingUp, Users, MapPin, Award, ArrowRight, AlertCircle } from "lucide-react";
 import heroImage from "@/assets/hero-solar.jpg";
 
 const Index = () => {
@@ -10,10 +10,10 @@ const Index = () => {
       <nav className="bg-background/80 backdrop-blur-sm border-b border-border sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Zap className="h-8 w-8 text-primary" />
+            <div className="flex items-center space-x-3">
+              <img src="/lovable-uploads/aa493da6-7e8f-4668-854f-4c142e81d9a4.png" alt="Montaigne Energie" className="h-10 w-10" />
               <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                EnerVest France
+                Montaigne Energie
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -100,39 +100,11 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Centrale Provence</CardTitle>
-                  <MapPin className="h-5 w-5 text-accent" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">15 MW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">8.2%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-accent/20 text-accent rounded-full text-sm">En construction</span>
-                  </div>
-                  <Button variant="energy" className="w-full mt-4">
-                    Voir les détails
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Parc Occitanie</CardTitle>
+                  <CardTitle className="text-xl">WATTS'ON B1</CardTitle>
                   <Award className="h-5 w-5 text-primary" />
                 </div>
               </CardHeader>
@@ -140,11 +112,11 @@ const Index = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">25 MW</span>
+                    <span className="font-semibold">18 MW</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">9.1%</span>
+                    <span className="font-semibold text-primary">8.4%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Statut:</span>
@@ -157,18 +129,18 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
+            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50 border-accent/50">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Ferme Loire</CardTitle>
-                  <TrendingUp className="h-5 w-5 text-accent" />
+                  <CardTitle className="text-xl">WATTS'ON A1</CardTitle>
+                  <AlertCircle className="h-5 w-5 text-accent" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">30 MW</span>
+                    <span className="font-semibold">22 MW</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Rendement:</span>
@@ -176,10 +148,66 @@ const Index = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-sm">Planifié</span>
+                    <span className="px-2 py-1 bg-accent/20 text-accent rounded-full text-sm">Recherche de fonds</span>
+                  </div>
+                  <Button variant="premium" className="w-full mt-4">
+                    Investir maintenant
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl">WATTS'ON B2</CardTitle>
+                  <MapPin className="h-5 w-5 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Capacité:</span>
+                    <span className="font-semibold">16 MW</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rendement:</span>
+                    <span className="font-semibold text-primary">8.1%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Statut:</span>
+                    <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-sm">En construction</span>
                   </div>
                   <Button variant="energy" className="w-full mt-4">
                     Voir les détails
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50 border-accent/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl">WATTS'ON MAX</CardTitle>
+                  <AlertCircle className="h-5 w-5 text-accent" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Capacité:</span>
+                    <span className="font-semibold">35 MW</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rendement:</span>
+                    <span className="font-semibold text-primary">9.2%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Statut:</span>
+                    <span className="px-2 py-1 bg-accent/20 text-accent rounded-full text-sm">Recherche de fonds</span>
+                  </div>
+                  <Button variant="premium" className="w-full mt-4">
+                    Investir maintenant
                   </Button>
                 </div>
               </CardContent>
@@ -290,8 +318,8 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <Zap className="h-6 w-6" />
-                <span className="text-xl font-bold">EnerVest France</span>
+                <img src="/lovable-uploads/aa493da6-7e8f-4668-854f-4c142e81d9a4.png" alt="Montaigne Energie" className="h-6 w-6 brightness-0 invert" />
+                <span className="text-xl font-bold">Montaigne Energie</span>
               </div>
               <p className="text-white/80">
                 Financement participatif pour l'énergie renouvelable en France.
@@ -323,7 +351,7 @@ const Index = () => {
             </div>
           </div>
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/60">
-            <p>&copy; 2024 EnerVest France. Tous droits réservés.</p>
+            <p>&copy; 2024 Montaigne Energie. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

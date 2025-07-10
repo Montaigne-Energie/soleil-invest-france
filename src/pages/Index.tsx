@@ -329,7 +329,6 @@ const Index = () => {
               <h4 className="font-semibold mb-4">Projets</h4>
               <ul className="space-y-2 text-white/80">
                 <li>Centrales Photovoltaïques</li>
-                <li>Parcs Éoliens</li>
                 <li>Stockage d'Énergie</li>
               </ul>
             </div>

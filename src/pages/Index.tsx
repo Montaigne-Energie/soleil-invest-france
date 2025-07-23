@@ -20,7 +20,7 @@ const Index = () => {
               <a href="#projects" className="text-foreground hover:text-primary transition-colors">Projets</a>
               <a href="#investors" className="text-foreground hover:text-primary transition-colors">Investisseurs</a>
               <a href="#about" className="text-foreground hover:text-primary transition-colors">À propos</a>
-              <Button variant="premium" size="sm">
+              <Button variant="premium" size="sm" onClick={() => window.location.href = '/auth'}>
                 Espace Investisseur
               </Button>
             </div>
@@ -56,7 +56,7 @@ const Index = () => {
               Découvrir nos Projets
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-white/30 text-white hover:bg-white/10">
+            <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-white/30 text-white hover:bg-white/10" onClick={() => window.location.href = '/auth'}>
               Devenir Investisseur
             </Button>
           </div>
@@ -316,7 +316,7 @@ const Index = () => {
                     Transparence totale sur vos investissements
                   </li>
                 </ul>
-                <Button variant="hero" size="lg" className="w-full">
+                <Button variant="hero" size="lg" className="w-full" onClick={() => window.location.href = '/auth'}>
                   Commencer à Investir
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>

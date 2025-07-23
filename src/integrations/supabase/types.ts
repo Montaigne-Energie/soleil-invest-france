@@ -14,7 +14,117 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      Investisseur: {
+        Row: {
+          created_at: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
+      portefeuilles: {
+        Row: {
+          created_at: string
+          date_creation: string
+          description: string | null
+          devise: string | null
+          id: string
+          montant_total: number | null
+          nom_portefeuille: string
+          statut: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_creation?: string
+          description?: string | null
+          devise?: string | null
+          id?: string
+          montant_total?: number | null
+          nom_portefeuille: string
+          statut?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_creation?: string
+          description?: string | null
+          devise?: string | null
+          id?: string
+          montant_total?: number | null
+          nom_portefeuille?: string
+          statut?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          adresse: string | null
+          code_postal: string | null
+          created_at: string
+          date_creation: string
+          derniere_connexion: string | null
+          email: string
+          entreprise: string | null
+          id: string
+          nom: string | null
+          pays: string | null
+          prenom: string | null
+          statut_investisseur: string | null
+          telephone: string | null
+          updated_at: string
+          user_id: string
+          ville: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          code_postal?: string | null
+          created_at?: string
+          date_creation?: string
+          derniere_connexion?: string | null
+          email: string
+          entreprise?: string | null
+          id?: string
+          nom?: string | null
+          pays?: string | null
+          prenom?: string | null
+          statut_investisseur?: string | null
+          telephone?: string | null
+          updated_at?: string
+          user_id: string
+          ville?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          code_postal?: string | null
+          created_at?: string
+          date_creation?: string
+          derniere_connexion?: string | null
+          email?: string
+          entreprise?: string | null
+          id?: string
+          nom?: string | null
+          pays?: string | null
+          prenom?: string | null
+          statut_investisseur?: string | null
+          telephone?: string | null
+          updated_at?: string
+          user_id?: string
+          ville?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

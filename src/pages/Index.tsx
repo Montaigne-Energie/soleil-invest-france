@@ -112,11 +112,25 @@ const Index = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">18 MW</span>
+                    <span className="font-semibold">1,34 MW</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">8.4%</span>
+                    <span className="text-muted-foreground">Sous-projets:</span>
+                    <span className="font-semibold">6 centrales</span>
+                  </div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>• EPINASSE:</span>
+                      <span>343,9 kWc</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>• REPUTE:</span>
+                      <span>4 × 250 kWc</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Production:</span>
+                    <span className="font-semibold text-primary">1,49 GWh/an</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Statut:</span>

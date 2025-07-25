@@ -86,6 +86,46 @@ const Dashboard = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  const createExampleInvestments = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Récupérer quelques projets disponibles pour créer des exemples
+      const { data: projets, error: projetsError } = await supabase
+        .from('projets')
+        .select('*')
+        .eq('statut', 'actif')
+        .limit(3);
+
+      if (projetsError) throw projetsError;
+      if (!projets || projets.length === 0) return;
+
+      // Créer des investissements d'exemple
+      const exempleInvestissements = projets.slice(0, 2).map((projet, index) => {
+        const nombreParts = index === 0 ? 5 : 3; // Premier projet: 5 parts, deuxième: 3 parts
+        return {
+          user_id: user.id,
+          projet_id: projet.id,
+          nombre_parts: nombreParts,
+          prix_total: nombreParts * projet.prix_par_part
+        };
+      });
+
+      const { error: insertError } = await supabase
+        .from('investissements')
+        .insert(exempleInvestissements);
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: "Bienvenue !",
+        description: "Des investissements d'exemple ont été ajoutés à votre portfolio",
+      });
+    } catch (error) {
+      console.error('Erreur lors de la création des investissements d\'exemple:', error);
+    }
+  };
+
   const loadDashboardData = async () => {
     try {
       // Charger les investissements de l'utilisateur
@@ -98,7 +138,22 @@ const Dashboard = () => {
         .eq('user_id', user?.id);
 
       if (investError) throw investError;
-      setInvestissements(investissementsData || []);
+      
+      // Si l'utilisateur n'a aucun investissement, créer des exemples
+      if (!investissementsData || investissementsData.length === 0) {
+        await createExampleInvestments();
+        // Recharger les investissements après création des exemples
+        const { data: newInvestissements } = await supabase
+          .from('investissements')
+          .select(`
+            *,
+            projets (*)
+          `)
+          .eq('user_id', user?.id);
+        setInvestissements(newInvestissements || []);
+      } else {
+        setInvestissements(investissementsData || []);
+      }
 
       // Charger tous les projets disponibles
       const { data: projetsData, error: projetsError } = await supabase
@@ -111,8 +166,11 @@ const Dashboard = () => {
       setProjetsDisponibles(projetsData || []);
 
       // Charger les données de production pour les projets investis
-      if (investissementsData && investissementsData.length > 0) {
-        const projetIds = investissementsData.map(inv => inv.projet_id);
+      const currentInvestissements = investissementsData && investissementsData.length > 0 ? investissementsData : 
+        (await supabase.from('investissements').select('projet_id').eq('user_id', user?.id)).data || [];
+      
+      if (currentInvestissements.length > 0) {
+        const projetIds = currentInvestissements.map(inv => inv.projet_id);
         const { data: productionsData, error: prodError } = await supabase
           .from('productions_quotidiennes')
           .select(`

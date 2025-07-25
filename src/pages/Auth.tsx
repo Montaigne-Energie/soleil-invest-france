@@ -46,10 +46,10 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect to home if user is authenticated
+        // Redirect to dashboard if user is authenticated
         if (session?.user) {
           setTimeout(() => {
-            navigate('/');
+            navigate('/dashboard');
           }, 0);
         }
       }
@@ -60,9 +60,9 @@ const Auth = () => {
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Redirect to home if user is already authenticated
+      // Redirect to dashboard if user is already authenticated
       if (session?.user) {
-        navigate('/');
+        navigate('/dashboard');
       }
     });
 

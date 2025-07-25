@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      investissements: {
+        Row: {
+          created_at: string
+          date_investissement: string
+          id: string
+          nombre_parts: number
+          prix_total: number
+          projet_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date_investissement?: string
+          id?: string
+          nombre_parts: number
+          prix_total: number
+          projet_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date_investissement?: string
+          id?: string
+          nombre_parts?: number
+          prix_total?: number
+          projet_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investissements_projet_id_fkey"
+            columns: ["projet_id"]
+            isOneToOne: false
+            referencedRelation: "projets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Investisseur: {
         Row: {
           created_at: string
@@ -67,6 +108,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      productions_quotidiennes: {
+        Row: {
+          created_at: string
+          date_production: string
+          id: string
+          production_kwh: number
+          projet_id: string
+          revenus_total: number
+        }
+        Insert: {
+          created_at?: string
+          date_production: string
+          id?: string
+          production_kwh: number
+          projet_id: string
+          revenus_total: number
+        }
+        Update: {
+          created_at?: string
+          date_production?: string
+          id?: string
+          production_kwh?: number
+          projet_id?: string
+          revenus_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productions_quotidiennes_projet_id_fkey"
+            columns: ["projet_id"]
+            isOneToOne: false
+            referencedRelation: "projets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -122,6 +198,54 @@ export type Database = {
           updated_at?: string
           user_id?: string
           ville?: string | null
+        }
+        Relationships: []
+      }
+      projets: {
+        Row: {
+          capacite_mw: number | null
+          created_at: string
+          date_creation: string
+          description: string | null
+          id: string
+          localisation: string | null
+          nom: string
+          parts_disponibles: number
+          parts_totales: number
+          prix_par_part: number
+          statut: string | null
+          type_projet: string
+          updated_at: string
+        }
+        Insert: {
+          capacite_mw?: number | null
+          created_at?: string
+          date_creation?: string
+          description?: string | null
+          id?: string
+          localisation?: string | null
+          nom: string
+          parts_disponibles: number
+          parts_totales: number
+          prix_par_part: number
+          statut?: string | null
+          type_projet: string
+          updated_at?: string
+        }
+        Update: {
+          capacite_mw?: number | null
+          created_at?: string
+          date_creation?: string
+          description?: string | null
+          id?: string
+          localisation?: string | null
+          nom?: string
+          parts_disponibles?: number
+          parts_totales?: number
+          prix_par_part?: number
+          statut?: string | null
+          type_projet?: string
+          updated_at?: string
         }
         Relationships: []
       }

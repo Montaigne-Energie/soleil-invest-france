@@ -49,9 +49,18 @@ interface ProductionData {
   projets: Projet;
 }
 
+interface Profile {
+  id: string;
+  user_id: string;
+  nom: string;
+  prenom: string;
+  email: string;
+}
+
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [investissements, setInvestissements] = useState<Investissement[]>([]);
   const [projetsDisponibles, setProjetsDisponibles] = useState<Projet[]>([]);
   const [productions, setProductions] = useState<ProductionData[]>([]);
@@ -128,6 +137,19 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
+      // Charger le profil de l'utilisateur
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profileError) {
+        console.error('Erreur lors du chargement du profil:', profileError);
+      } else {
+        setProfile(profileData);
+      }
+
       // Charger les investissements de l'utilisateur
       const { data: investissementsData, error: investError } = await supabase
         .from('investissements')
@@ -309,7 +331,7 @@ const Dashboard = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
-                Bienvenue, {user?.email}
+                Bienvenue, {profile?.nom ? `Mr ${profile.nom}` : user?.email}
               </span>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />

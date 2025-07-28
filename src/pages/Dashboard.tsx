@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from '@supabase/supabase-js';
@@ -16,7 +17,9 @@ import {
   ShoppingCart,
   BarChart3,
   Sun,
-  Wind
+  Wind,
+  Leaf,
+  TreePine
 } from "lucide-react";
 
 interface Projet {
@@ -309,6 +312,47 @@ const Dashboard = () => {
     }, 0);
   };
 
+  const calculateEnvironmentalImpact = () => {
+    const totalProduction = productions.reduce((total, prod) => {
+      const investissement = investissements.find(inv => inv.projet_id === prod.projet_id);
+      if (!investissement) return total;
+      
+      const partOwnership = investissement.nombre_parts / investissement.projets.parts_totales;
+      return total + (prod.production_kwh * partOwnership);
+    }, 0);
+
+    // Calculs d'équivalences environnementales (ratios standards)
+    // 1 kWh d'énergie renouvelable évite environ 0.5 kg de CO2
+    // 1 arbre absorbe environ 22 kg de CO2 par an
+    const co2Avoided = (totalProduction * 0.5) / 1000; // en tonnes
+    const treesEquivalent = Math.round(co2Avoided * 1000 / 22); // nombre d'arbres
+
+    return {
+      totalProduction: totalProduction / 1000, // en MWh
+      co2Avoided,
+      treesEquivalent
+    };
+  };
+
+  const getProductionChartData = () => {
+    const chartData = productions.map(prod => {
+      const investissement = investissements.find(inv => inv.projet_id === prod.projet_id);
+      if (!investissement) return null;
+      
+      const partOwnership = investissement.nombre_parts / investissement.projets.parts_totales;
+      const userProduction = prod.production_kwh * partOwnership;
+      
+      return {
+        date: new Date(prod.date_production).toLocaleDateString(),
+        production: Math.round(userProduction / 1000), // en MWh
+        projet: prod.projets.nom,
+        type: prod.projets.type_projet
+      };
+    }).filter(Boolean);
+
+    return chartData;
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
@@ -322,6 +366,8 @@ const Dashboard = () => {
 
   const { totalInvesti, totalParts } = calculatePortfolioStats();
   const dailyRevenue = calculateDailyRevenue();
+  const environmentalImpact = calculateEnvironmentalImpact();
+  const productionChartData = getProductionChartData();
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -402,10 +448,11 @@ const Dashboard = () => {
 
         {/* Onglets principaux */}
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="portfolio">Mes Investissements</TabsTrigger>
             <TabsTrigger value="buy">Acheter des Parts</TabsTrigger>
             <TabsTrigger value="production">Production J-1</TabsTrigger>
+            <TabsTrigger value="impact">Impact Environnemental</TabsTrigger>
           </TabsList>
 
           {/* Onglet Mes Investissements */}
@@ -642,6 +689,128 @@ const Dashboard = () => {
                     })}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Impact Environnemental */}
+          <TabsContent value="impact" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              {/* Carte Production Totale */}
+              <Card className="shadow-premium border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Production Totale</p>
+                      <p className="text-2xl font-bold text-foreground">{environmentalImpact.totalProduction.toFixed(1)} MWh</p>
+                    </div>
+                    <Zap className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Carte CO2 Évité */}
+              <Card className="shadow-premium border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">CO2 Évité</p>
+                      <p className="text-2xl font-bold text-green-600">{environmentalImpact.co2Avoided.toFixed(1)} tonnes</p>
+                    </div>
+                    <Leaf className="h-8 w-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Carte Équivalent Arbres */}
+              <Card className="shadow-premium border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Équivalent Arbres</p>
+                      <p className="text-2xl font-bold text-green-600">{environmentalImpact.treesEquivalent}</p>
+                      <p className="text-xs text-muted-foreground">arbres plantés</p>
+                    </div>
+                    <TreePine className="h-8 w-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Graphique de Production */}
+            <Card className="shadow-premium">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="h-6 w-6 mr-2" />
+                  Évolution de votre Production Électrique
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {productionChartData.length === 0 ? (
+                  <div className="text-center py-8">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Aucune donnée de production disponible</p>
+                    <p className="text-sm text-muted-foreground">Les données apparaîtront après vos premiers investissements</p>
+                  </div>
+                ) : (
+                  <div className="h-80 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={productionChartData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="date" />
+                        <YAxis label={{ value: 'Production (MWh)', angle: -90, position: 'insideLeft' }} />
+                        <Tooltip 
+                          formatter={(value: any, name: any, props: any) => [
+                            `${value} MWh`,
+                            'Production'
+                          ]}
+                          labelFormatter={(label: any) => `Date: ${label}`}
+                        />
+                        <Bar dataKey="production" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Informations supplémentaires */}
+            <Card className="shadow-premium">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Leaf className="h-6 w-6 mr-2" />
+                  Impact Environnemental Détaillé
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Équivalences CO2</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Voitures retirées de la circulation :</span>
+                        <span className="font-medium">{Math.round(environmentalImpact.co2Avoided * 0.5)} voitures/an</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Foyers alimentés :</span>
+                        <span className="font-medium">{Math.round(environmentalImpact.totalProduction / 3.5)} foyers/an</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-lg">Contribution Énergétique</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Énergie renouvelable produite :</span>
+                        <span className="font-medium">{environmentalImpact.totalProduction.toFixed(1)} MWh</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Pourcentage d'énergie verte :</span>
+                        <span className="font-medium text-green-600">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

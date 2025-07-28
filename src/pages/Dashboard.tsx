@@ -88,7 +88,8 @@ const Dashboard = () => {
       if (!session?.user) {
         navigate('/auth');
       } else {
-        loadDashboardData();
+        // Délayer légèrement le chargement pour s'assurer que l'utilisateur est défini
+        setTimeout(() => loadDashboardData(), 100);
       }
     });
 
@@ -136,13 +137,18 @@ const Dashboard = () => {
   };
 
   const loadDashboardData = async () => {
+    if (!user?.id) {
+      console.log('User not loaded yet, skipping data load');
+      return;
+    }
+    
     try {
       // Charger le profil de l'utilisateur
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user?.id)
-        .single();
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (profileError) {
         console.error('Erreur lors du chargement du profil:', profileError);
@@ -157,7 +163,7 @@ const Dashboard = () => {
           *,
           projets (*)
         `)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (investError) throw investError;
       
@@ -171,7 +177,7 @@ const Dashboard = () => {
             *,
             projets (*)
           `)
-          .eq('user_id', user?.id);
+          .eq('user_id', user.id);
         setInvestissements(newInvestissements || []);
       } else {
         setInvestissements(investissementsData || []);
@@ -189,7 +195,7 @@ const Dashboard = () => {
 
       // Charger les données de production pour les projets investis
       const currentInvestissements = investissementsData && investissementsData.length > 0 ? investissementsData : 
-        (await supabase.from('investissements').select('projet_id').eq('user_id', user?.id)).data || [];
+        (await supabase.from('investissements').select('projet_id').eq('user_id', user.id)).data || [];
       
       if (currentInvestissements.length > 0) {
         const projetIds = currentInvestissements.map(inv => inv.projet_id);
@@ -253,7 +259,7 @@ const Dashboard = () => {
       const { error: investError } = await supabase
         .from('investissements')
         .insert({
-          user_id: user?.id,
+          user_id: user.id,
           projet_id: projetId,
           nombre_parts: quantite,
           prix_total: prixTotal

@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { useInactivityTimer } from "@/hooks/useInactivityTimer";
+import { InactivityModal } from "@/components/InactivityModal";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from '@supabase/supabase-js';
 import { 
@@ -69,8 +71,28 @@ const Dashboard = () => {
   const [productions, setProductions] = useState<ProductionData[]>([]);
   const [quantiteAcheter, setQuantiteAcheter] = useState<{ [key: string]: number }>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [showInactivityModal, setShowInactivityModal] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Configuration du timer d'inactivité : 5 minutes = 300000ms
+  const { showWarning } = useInactivityTimer({
+    timeout: 300000, // 5 minutes
+    onTimeout: () => {
+      // Déconnexion automatique après le timeout
+      handleSignOut();
+      toast({
+        title: "Session expirée",
+        description: "Vous avez été déconnecté automatiquement pour des raisons de sécurité.",
+        variant: "destructive"
+      });
+    },
+    onWarning: () => {
+      // Afficher le modal d'avertissement
+      setShowInactivityModal(true);
+    },
+    warningTime: 30000 // Avertissement 30 secondes avant déconnexion
+  });
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -249,8 +271,17 @@ const Dashboard = () => {
   };
 
   const handleSignOut = async () => {
+    setShowInactivityModal(false);
     await supabase.auth.signOut();
     navigate('/');
+  };
+
+  const handleContinueSession = () => {
+    setShowInactivityModal(false);
+    toast({
+      title: "Session prolongée",
+      description: "Votre session a été prolongée avec succès.",
+    });
   };
 
   const handleAcheterParts = async (projetId: string) => {
@@ -837,6 +868,14 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal d'inactivité */}
+      <InactivityModal 
+        isOpen={showInactivityModal}
+        onContinue={handleContinueSession}
+        onLogout={handleSignOut}
+        countdown={30}
+      />
     </div>
   );
 };

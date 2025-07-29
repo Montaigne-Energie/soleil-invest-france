@@ -107,7 +107,7 @@ const Dashboard = () => {
       const { data: projets, error: projetsError } = await supabase
         .from('projets')
         .select('*')
-        .eq('statut', 'actif')
+        .eq('statut', 'operationnel')
         .limit(3);
 
       if (projetsError) throw projetsError;
@@ -146,32 +146,39 @@ const Dashboard = () => {
     }
     
     try {
-      // Charger le profil de l'utilisateur
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Charger les données en parallèle pour optimiser les performances
+      const [profileResult, investissementsResult] = await Promise.all([
+        // Charger le profil
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        
+        // Charger les investissements
+        supabase
+          .from('investissements')
+          .select(`
+            *,
+            projets (*)
+          `)
+          .eq('user_id', user.id)
+      ]);
 
-      if (profileError) {
-        console.error('Erreur lors du chargement du profil:', profileError);
+      // Traiter le profil
+      if (profileResult.error) {
+        console.error('Erreur lors du chargement du profil:', profileResult.error);
       } else {
-        setProfile(profileData);
+        setProfile(profileResult.data);
       }
 
-      // Charger les investissements de l'utilisateur
-      const { data: investissementsData, error: investError } = await supabase
-        .from('investissements')
-        .select(`
-          *,
-          projets (*)
-        `)
-        .eq('user_id', user.id);
-
-      if (investError) throw investError;
+      // Traiter les investissements
+      if (investissementsResult.error) throw investissementsResult.error;
+      
+      let finalInvestissements = investissementsResult.data || [];
       
       // Si l'utilisateur n'a aucun investissement, créer des exemples
-      if (!investissementsData || investissementsData.length === 0) {
+      if (finalInvestissements.length === 0) {
         await createExampleInvestments();
         // Recharger les investissements après création des exemples
         const { data: newInvestissements } = await supabase
@@ -181,40 +188,54 @@ const Dashboard = () => {
             projets (*)
           `)
           .eq('user_id', user.id);
-        setInvestissements(newInvestissements || []);
-      } else {
-        setInvestissements(investissementsData || []);
+        finalInvestissements = newInvestissements || [];
       }
-
-      // Charger tous les projets disponibles
-      const { data: projetsData, error: projetsError } = await supabase
-        .from('projets')
-        .select('*')
-        .eq('statut', 'actif')
-        .gt('parts_disponibles', 0);
-
-      if (projetsError) throw projetsError;
-      setProjetsDisponibles(projetsData || []);
-
-      // Charger les données de production pour les projets investis
-      const currentInvestissements = investissementsData && investissementsData.length > 0 ? investissementsData : 
-        (await supabase.from('investissements').select('projet_id').eq('user_id', user.id)).data || [];
       
-      if (currentInvestissements.length > 0) {
-        const projetIds = currentInvestissements.map(inv => inv.projet_id);
-        const { data: productionsData, error: prodError } = await supabase
-          .from('productions_quotidiennes')
-          .select(`
-            *,
-            projets (*)
-          `)
-          .in('projet_id', projetIds)
-          .order('date_production', { ascending: false })
-          .limit(10);
+      setInvestissements(finalInvestissements);
 
-        if (prodError) throw prodError;
-        setProductions(productionsData || []);
+      // Charger en parallèle les projets disponibles et les productions
+      const promises = [];
+      
+      // Limiter les projets disponibles aux plus récents/actifs seulement pour l'onglet d'achat
+      promises.push(
+        supabase
+          .from('projets')
+          .select('*')
+          .or('statut.eq.financement,statut.eq.operationnel,statut.eq.en_construction')
+          .gt('parts_disponibles', 0)
+          .order('created_at', { ascending: false })
+          .limit(12) // Limiter à 12 projets pour éviter de surcharger
+      );
+
+      // Charger les données de production uniquement si l'utilisateur a des investissements
+      if (finalInvestissements.length > 0) {
+        const projetIds = finalInvestissements.map(inv => inv.projet_id);
+        promises.push(
+          supabase
+            .from('productions_quotidiennes')
+            .select(`
+              *,
+              projets (*)
+            `)
+            .in('projet_id', projetIds)
+            .order('date_production', { ascending: false })
+            .limit(20) // Augmenter légèrement pour avoir plus de données
+        );
       }
+
+      const results = await Promise.all(promises);
+      
+      // Traiter les résultats
+      const projetsResult = results[0];
+      if (projetsResult.error) throw projetsResult.error;
+      setProjetsDisponibles(projetsResult.data || []);
+
+      if (results.length > 1) {
+        const productionsResult = results[1];
+        if (productionsResult.error) throw productionsResult.error;
+        setProductions(productionsResult.data || []);
+      }
+
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error);
       toast({

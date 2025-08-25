@@ -55,8 +55,6 @@ interface ProductionData {
 }
 
 interface Profile {
-  id: string;
-  user_id: string;
   nom: string;
   prenom: string;
   email: string;
@@ -162,107 +160,87 @@ const Dashboard = () => {
   };
 
   const loadDashboardData = async () => {
-    if (!user?.id) {
-      console.log('User not loaded yet, skipping data load');
-      return;
-    }
+    if (!user?.id) return;
     
     try {
-      // Charger les données en parallèle pour optimiser les performances
-      const [profileResult, investissementsResult] = await Promise.all([
-        // Charger le profil
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-        
-        // Charger les investissements
-        supabase
-          .from('investissements')
-          .select(`
-            *,
-            projets (*)
-          `)
-          .eq('user_id', user.id)
-      ]);
-
-      // Traiter le profil
-      if (profileResult.error) {
-        console.error('Erreur lors du chargement du profil:', profileResult.error);
-      } else {
-        setProfile(profileResult.data);
-      }
-
-      // Traiter les investissements
-      if (investissementsResult.error) throw investissementsResult.error;
+      // Chargement simplifié et optimisé - données essentielles uniquement
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('nom, prenom, email')
+        .eq('user_id', user.id)
+        .maybeSingle();
       
-      let finalInvestissements = investissementsResult.data || [];
+      setProfile(profile);
+
+      // Charger investissements avec projets en une seule requête
+      const { data: investissements, error } = await supabase
+        .from('investissements')
+        .select(`
+          id, projet_id, nombre_parts, prix_total, date_investissement,
+          projets!inner (
+            id, nom, description, type_projet, localisation, 
+            capacite_mw, prix_par_part, parts_totales, parts_disponibles, statut
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
       
-      // Si l'utilisateur n'a aucun investissement, créer des exemples
+      let finalInvestissements = investissements || [];
+      
+      // Créer investissements d'exemple si nécessaire (simplifié)
       if (finalInvestissements.length === 0) {
-        await createExampleInvestments();
-        // Recharger les investissements après création des exemples
-        const { data: newInvestissements } = await supabase
-          .from('investissements')
-          .select(`
-            *,
-            projets (*)
-          `)
-          .eq('user_id', user.id);
-        finalInvestissements = newInvestissements || [];
+        const { data: exempleProjets } = await supabase
+          .from('projets')
+          .select('id, prix_par_part')
+          .eq('statut', 'operationnel')
+          .limit(2);
+        
+        if (exempleProjets?.length) {
+          await supabase
+            .from('investissements')
+            .insert(
+              exempleProjets.map((p, i) => ({
+                user_id: user.id,
+                projet_id: p.id,
+                nombre_parts: i === 0 ? 5 : 3,
+                prix_total: (i === 0 ? 5 : 3) * p.prix_par_part
+              }))
+            );
+          
+          // Recharger après création
+          const { data: nouveauxInvestissements } = await supabase
+            .from('investissements')
+            .select(`
+              id, projet_id, nombre_parts, prix_total, date_investissement,
+              projets!inner (
+                id, nom, description, type_projet, localisation, 
+                capacite_mw, prix_par_part, parts_totales, parts_disponibles, statut
+              )
+            `)
+            .eq('user_id', user.id);
+          
+          finalInvestissements = nouveauxInvestissements || [];
+        }
       }
       
       setInvestissements(finalInvestissements);
 
-      // Charger en parallèle les projets disponibles et les productions
-      const promises = [];
+      // Charger projets disponibles pour l'onglet d'achat (simplifié)
+      const { data: projetsDisponibles } = await supabase
+        .from('projets')
+        .select('*')
+        .eq('statut', 'operationnel')
+        .gt('parts_disponibles', 0)
+        .limit(6);
       
-      // Limiter les projets disponibles aux plus récents/actifs seulement pour l'onglet d'achat
-      promises.push(
-        supabase
-          .from('projets')
-          .select('*')
-          .or('statut.eq.financement,statut.eq.operationnel,statut.eq.en_construction')
-          .gt('parts_disponibles', 0)
-          .order('created_at', { ascending: false })
-          .limit(12) // Limiter à 12 projets pour éviter de surcharger
-      );
-
-      // Charger les données de production uniquement si l'utilisateur a des investissements
-      if (finalInvestissements.length > 0) {
-        const projetIds = finalInvestissements.map(inv => inv.projet_id);
-        promises.push(
-          supabase
-            .from('productions_quotidiennes')
-            .select(`
-              *,
-              projets (*)
-            `)
-            .in('projet_id', projetIds)
-            .order('date_production', { ascending: false })
-            .limit(20) // Augmenter légèrement pour avoir plus de données
-        );
-      }
-
-      const results = await Promise.all(promises);
-      
-      // Traiter les résultats
-      const projetsResult = results[0];
-      if (projetsResult.error) throw projetsResult.error;
-      setProjetsDisponibles(projetsResult.data || []);
-
-      if (results.length > 1) {
-        const productionsResult = results[1];
-        if (productionsResult.error) throw productionsResult.error;
-        setProductions(productionsResult.data || []);
-      }
+      setProjetsDisponibles(projetsDisponibles || []);
 
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error);
+      console.error('Erreur:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les données du dashboard",
+        title: "Erreur de connexion",
+        description: "Veuillez recharger la page",
         variant: "destructive"
       });
     } finally {
@@ -447,8 +425,8 @@ const Dashboard = () => {
       </nav>
 
       <div className="container mx-auto px-6 py-8">
-        {/* Stats globales */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Stats simplifiées */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="shadow-premium border-border/50">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -477,34 +455,20 @@ const Dashboard = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Projets</p>
+                  <p className="text-sm text-muted-foreground">Mes Projets</p>
                   <p className="text-2xl font-bold text-foreground">{investissements.length}</p>
                 </div>
                 <Building className="h-8 w-8 text-primary" />
               </div>
             </CardContent>
           </Card>
-
-          <Card className="shadow-premium border-border/50">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Revenus J-1</p>
-                  <p className="text-2xl font-bold text-primary">{dailyRevenue.toFixed(2)}€</p>
-                </div>
-                <Zap className="h-8 w-8 text-accent" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
-        {/* Onglets principaux */}
+        {/* Interface simplifiée */}
         <Tabs defaultValue="portfolio" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="portfolio">Mes Investissements</TabsTrigger>
-            <TabsTrigger value="buy">Acheter des Parts</TabsTrigger>
-            <TabsTrigger value="production">Production J-1</TabsTrigger>
-            <TabsTrigger value="impact">Impact Environnemental</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="portfolio">Mon Portfolio</TabsTrigger>
+            <TabsTrigger value="buy">Investir</TabsTrigger>
           </TabsList>
 
           {/* Onglet Mes Investissements */}

@@ -78,13 +78,18 @@ const Dashboard = () => {
       
       if (!session?.user) {
         navigate('/auth');
-      } else {
-        loadDashboardData();
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Effet séparé pour charger les données quand l'utilisateur est prêt
+  useEffect(() => {
+    if (user?.id && !isLoading) {
+      loadDashboardData();
+    }
+  }, [user?.id, isLoading]);
 
   const loadDashboardData = async () => {
     try {

@@ -74,11 +74,12 @@ const Dashboard = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setIsLoading(false);
       
       if (!session?.user) {
         navigate('/auth');
       } else {
-        setTimeout(() => loadDashboardData(), 50);
+        loadDashboardData();
       }
     });
 
@@ -86,66 +87,26 @@ const Dashboard = () => {
   }, [navigate]);
 
   const loadDashboardData = async () => {
-    if (!user?.id) return;
-    
     try {
-      // Chargement ultra rapide - données minimales
-      const { data: investissements, error } = await supabase
+      setIsLoading(false);
+      
+      if (!user?.id) return;
+      
+      // Chargement simple - juste les investissements
+      const { data: investissements } = await supabase
         .from('investissements')
         .select(`
           id, projet_id, nombre_parts, prix_total,
           projets!inner (id, nom, type_projet, capacite_mw, prix_par_part)
         `)
         .eq('user_id', user.id)
-        .limit(5); // Très limité pour performance max
-
-      if (error) throw error;
+        .limit(3);
       
-      let finalInvestissements = investissements || [];
-      
-      // Créer investissements d'exemple si nécessaire (ultra rapide)
-      if (finalInvestissements.length === 0) {
-        const { data: exempleProjets } = await supabase
-          .from('projets')
-          .select('id, prix_par_part')
-          .eq('statut', 'operationnel')
-          .limit(1);
-        
-        if (exempleProjets?.length) {
-          await supabase
-            .from('investissements')
-            .insert({
-              user_id: user.id,
-              projet_id: exempleProjets[0].id,
-              nombre_parts: 5,
-              prix_total: 5 * exempleProjets[0].prix_par_part
-            });
-          
-          // Recharger minimal
-          const { data: nouveauxInvestissements } = await supabase
-            .from('investissements')
-            .select(`
-              id, projet_id, nombre_parts, prix_total,
-              projets!inner (id, nom, type_projet, capacite_mw, prix_par_part)
-            `)
-            .eq('user_id', user.id)
-            .limit(5);
-          
-          finalInvestissements = nouveauxInvestissements || [];
-        }
-      }
-      
-      setInvestissements(finalInvestissements);
+      setInvestissements(investissements || []);
 
     } catch (error) {
-      console.error('Erreur:', error);
-      toast({
-        title: "Connexion rapide",
-        description: "Mode simplifié activé",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
+      console.error('Erreur chargement:', error);
+      setInvestissements([]);
     }
   };
 

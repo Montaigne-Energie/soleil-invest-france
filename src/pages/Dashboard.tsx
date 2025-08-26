@@ -88,12 +88,16 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      setIsLoading(false);
+      console.log('Début chargement dashboard pour user:', user?.id);
       
-      if (!user?.id) return;
+      if (!user?.id) {
+        console.log('Pas de user ID, arrêt du chargement');
+        setIsLoading(false);
+        return;
+      }
       
       // Chargement simple - juste les investissements
-      const { data: investissements } = await supabase
+      const { data: investissements, error } = await supabase
         .from('investissements')
         .select(`
           id, projet_id, nombre_parts, prix_total,
@@ -102,11 +106,19 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .limit(3);
       
+      console.log('Résultat requête investissements:', { investissements, error });
+      
+      if (error) {
+        console.error('Erreur SQL:', error);
+      }
+      
       setInvestissements(investissements || []);
+      setIsLoading(false);
 
     } catch (error) {
       console.error('Erreur chargement:', error);
       setInvestissements([]);
+      setIsLoading(false);
     }
   };
 

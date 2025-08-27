@@ -247,7 +247,12 @@ const Dashboard = () => {
                           )}
                           <div>
                             <h4 className="font-medium text-sm">{investissement.projets.nom}</h4>
-                            <p className="text-xs text-muted-foreground">{investissement.projets.capacite_mw} MW</p>
+                            <p className="text-xs text-muted-foreground">
+                              {investissement.projets.capacite_mw >= 1 
+                                ? `${investissement.projets.capacite_mw} MW`
+                                : `${(investissement.projets.capacite_mw * 1000).toFixed(0)} kWc`
+                              }
+                            </p>
                           </div>
                         </div>
                         <div className="text-right">

@@ -16,6 +16,7 @@ import {
   Sun,
   Wind
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface Projet {
   id: string;
@@ -33,10 +34,16 @@ interface Investissement {
   projets: Projet;
 }
 
+interface ProductionData {
+  date: string;
+  revenus: number;
+}
+
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [investissements, setInvestissements] = useState<Investissement[]>([]);
+  const [productionData, setProductionData] = useState<ProductionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInactivityModal, setShowInactivityModal] = useState(false);
   const navigate = useNavigate();
@@ -118,11 +125,39 @@ const Dashboard = () => {
       }
       
       setInvestissements(investissements || []);
+      
+      // Chargement des données de production
+      if (investissements && investissements.length > 0) {
+        const projetIds = investissements.map(inv => inv.projet_id);
+        const { data: productions, error: prodError } = await supabase
+          .from('productions_quotidiennes')
+          .select('date_production, revenus_total')
+          .in('projet_id', projetIds)
+          .order('date_production', { ascending: true });
+        
+        if (productions && !prodError) {
+          // Regrouper par date et sommer les revenus
+          const groupedData = productions.reduce((acc: { [key: string]: number }, prod) => {
+            const date = new Date(prod.date_production).getDate().toString().padStart(2, '0');
+            acc[date] = (acc[date] || 0) + Number(prod.revenus_total);
+            return acc;
+          }, {});
+          
+          const chartData = Object.entries(groupedData).map(([day, revenus]) => ({
+            date: day,
+            revenus: Number(revenus.toFixed(2))
+          }));
+          
+          setProductionData(chartData);
+        }
+      }
+      
       setIsLoading(false);
 
     } catch (error) {
       console.error('Erreur chargement:', error);
       setInvestissements([]);
+      setProductionData([]);
       setIsLoading(false);
     }
   };
@@ -218,6 +253,52 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Graphique des revenus */}
+        {productionData.length > 0 && (
+          <Card className="shadow-sm mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center text-lg">
+                <Euro className="h-5 w-5 mr-2" />
+                Revenus quotidiens
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={productionData}>
+                    <XAxis 
+                      dataKey="date" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`${value}€`, 'Revenus']}
+                      labelFormatter={(label) => `Jour ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        fontSize: '12px'
+                      }}
+                    />
+                    <Bar 
+                      dataKey="revenus" 
+                      fill="hsl(var(--primary))"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Portfolio simplifié */}
         <Card className="shadow-sm">

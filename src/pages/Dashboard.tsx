@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
-interface Projet {
+interface ProjetBase {
   id: string;
   nom: string;
   type_projet: string;
@@ -26,12 +26,20 @@ interface Projet {
   prix_par_part: number;
 }
 
+interface ProjetDisponible extends ProjetBase {
+  parts_disponibles: number;
+  parts_totales: number;
+  description?: string;
+  localisation?: string;
+  statut?: string;
+}
+
 interface Investissement {
   id: string;
   projet_id: string;
   nombre_parts: number;
   prix_total: number;
-  projets: Projet;
+  projets: ProjetBase;
 }
 
 interface ProductionData {
@@ -43,6 +51,7 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [investissements, setInvestissements] = useState<Investissement[]>([]);
+  const [projetsDisponibles, setProjetsDisponibles] = useState<ProjetDisponible[]>([]);
   const [productionData, setProductionData] = useState<ProductionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showInactivityModal, setShowInactivityModal] = useState(false);
@@ -126,6 +135,18 @@ const Dashboard = () => {
       
       setInvestissements(investissements || []);
       
+      // Chargement des projets disponibles
+      const { data: projets, error: projetsError } = await supabase
+        .from('projets')
+        .select('id, nom, type_projet, capacite_mw, prix_par_part, parts_disponibles, parts_totales, description, localisation, statut')
+        .eq('statut', 'actif')
+        .gt('parts_disponibles', 0)
+        .order('nom');
+      
+      if (projets && !projetsError) {
+        setProjetsDisponibles(projets);
+      }
+      
       // Chargement des données de production
       if (investissements && investissements.length > 0) {
         const projetIds = investissements.map(inv => inv.projet_id);
@@ -157,6 +178,7 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Erreur chargement:', error);
       setInvestissements([]);
+      setProjetsDisponibles([]);
       setProductionData([]);
       setIsLoading(false);
     }
@@ -296,6 +318,75 @@ const Dashboard = () => {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Projets disponibles */}
+        {projetsDisponibles.length > 0 && (
+          <Card className="shadow-sm mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center text-lg">
+                <Building className="h-5 w-5 mr-2" />
+                Projets Disponibles
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {projetsDisponibles.slice(0, 6).map((projet) => (
+                  <Card key={projet.id} className="border border-border/30 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2">
+                          {projet.type_projet === 'solaire' ? (
+                            <Sun className="h-5 w-5 text-yellow-500" />
+                          ) : (
+                            <Wind className="h-5 w-5 text-blue-500" />
+                          )}
+                          <h4 className="font-semibold text-sm">{projet.nom}</h4>
+                        </div>
+                        
+                        <div className="space-y-2 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Capacité:</span>
+                            <span className="font-medium">
+                              {projet.capacite_mw >= 1 
+                                ? `${projet.capacite_mw} MW`
+                                : `${(projet.capacite_mw * 1000).toFixed(0)} kWc`
+                              }
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Prix/part:</span>
+                            <span className="font-medium">{projet.prix_par_part}€</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Disponible:</span>
+                            <span className="font-medium">{projet.parts_disponibles}/{projet.parts_totales} parts</span>
+                          </div>
+                          {projet.localisation && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Lieu:</span>
+                              <span className="font-medium">{projet.localisation}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <Button size="sm" className="w-full">
+                          Investir
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {projetsDisponibles.length > 6 && (
+                <div className="text-center mt-4">
+                  <Button variant="outline" size="sm">
+                    Voir tous les projets ({projetsDisponibles.length})
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

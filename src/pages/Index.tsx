@@ -2,8 +2,77 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Users, MapPin, Award, ArrowRight, AlertCircle } from "lucide-react";
 import heroImage from "@/assets/hero-solar.jpg";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+
+interface ProjetBase {
+  id: string;
+  nom: string;
+  description: string | null;
+  type_projet: string;
+  localisation: string | null;
+  capacite_mw: number | null;
+  prix_par_part: number;
+  parts_totales: number;
+  parts_disponibles: number;
+  statut: string | null;
+}
 
 const Index = () => {
+  const [projets, setProjets] = useState<ProjetBase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProjets = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('projets')
+          .select('*')
+          .eq('statut', 'actif')
+          .limit(4);
+
+        if (error) {
+          console.error('Erreur lors du chargement des projets:', error);
+          return;
+        }
+
+        setProjets(data || []);
+      } catch (error) {
+        console.error('Erreur:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProjets();
+  }, []);
+
+  const getStatutColor = (statut: string | null) => {
+    switch (statut) {
+      case 'operationnel':
+        return 'bg-primary/20 text-primary';
+      case 'construction':
+        return 'bg-muted text-muted-foreground';
+      case 'recherche_fonds':
+        return 'bg-accent/20 text-accent';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getStatutText = (statut: string | null) => {
+    switch (statut) {
+      case 'operationnel':
+        return 'Opérationnel';
+      case 'construction':
+        return 'En construction';
+      case 'recherche_fonds':
+        return 'Recherche de fonds';
+      default:
+        return 'Actif';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Navigation */}
@@ -100,133 +169,85 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">WATTS'ON B1</CardTitle>
-                  <Award className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">1,34 MW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sous-projets:</span>
-                    <span className="font-semibold">6 centrales</span>
-                  </div>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>• EPINASSE:</span>
-                      <span>343,9 kWc</span>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(4)].map((_, i) => (
+                <Card key={i} className="shadow-premium border-border/50">
+                  <CardHeader>
+                    <div className="h-6 bg-muted animate-pulse rounded"></div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {[...Array(4)].map((_, j) => (
+                        <div key={j} className="flex justify-between">
+                          <div className="h-4 bg-muted animate-pulse rounded w-20"></div>
+                          <div className="h-4 bg-muted animate-pulse rounded w-16"></div>
+                        </div>
+                      ))}
+                      <div className="h-10 bg-muted animate-pulse rounded w-full mt-4"></div>
                     </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>• REPUTE:</span>
-                      <span>4 × 250 kWc</span>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projets.map((projet) => (
+                <Card key={projet.id} className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-xl">{projet.nom}</CardTitle>
+                      {projet.statut === 'operationnel' && <Award className="h-5 w-5 text-primary" />}
+                      {projet.statut === 'recherche_fonds' && <AlertCircle className="h-5 w-5 text-accent" />}
+                      {projet.localisation && <MapPin className="h-5 w-5 text-primary" />}
                     </div>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Production:</span>
-                    <span className="font-semibold text-primary">1,49 GWh/an</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-primary/20 text-primary rounded-full text-sm">Opérationnel</span>
-                  </div>
-                  <Button variant="energy" className="w-full mt-4">
-                    Voir les détails
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50 border-accent/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">WATTS'ON A1</CardTitle>
-                  <AlertCircle className="h-5 w-5 text-accent" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">22 MW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">8.8%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-accent/20 text-accent rounded-full text-sm">Recherche de fonds</span>
-                  </div>
-                  <Button variant="premium" className="w-full mt-4">
-                    Investir maintenant
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">WATTS'ON B2</CardTitle>
-                  <MapPin className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">16 MW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">8.1%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-muted text-muted-foreground rounded-full text-sm">En construction</span>
-                  </div>
-                  <Button variant="energy" className="w-full mt-4">
-                    Voir les détails
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-premium hover:shadow-glow transition-all duration-300 border-border/50 border-accent/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">WATTS'ON MAX</CardTitle>
-                  <AlertCircle className="h-5 w-5 text-accent" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Capacité:</span>
-                    <span className="font-semibold">35 MW</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Rendement:</span>
-                    <span className="font-semibold text-primary">9.2%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Statut:</span>
-                    <span className="px-2 py-1 bg-accent/20 text-accent rounded-full text-sm">Recherche de fonds</span>
-                  </div>
-                  <Button variant="premium" className="w-full mt-4">
-                    Investir maintenant
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {projet.capacite_mw && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Capacité:</span>
+                          <span className="font-semibold">{projet.capacite_mw} MW</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Type:</span>
+                        <span className="font-semibold">{projet.type_projet}</span>
+                      </div>
+                      {projet.localisation && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Localisation:</span>
+                          <span className="font-semibold">{projet.localisation}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Parts disponibles:</span>
+                        <span className="font-semibold">{projet.parts_disponibles}/{projet.parts_totales}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Statut:</span>
+                        <span className={`px-2 py-1 rounded-full text-sm ${getStatutColor(projet.statut)}`}>
+                          {getStatutText(projet.statut)}
+                        </span>
+                      </div>
+                      {projet.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {projet.description}
+                        </p>
+                      )}
+                      <Button 
+                        variant={projet.statut === 'recherche_fonds' ? 'premium' : 'energy'} 
+                        className="w-full mt-4"
+                        onClick={() => window.location.href = '/auth'}
+                      >
+                        {projet.statut === 'recherche_fonds' ? 'Investir maintenant' : 'Voir les détails'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

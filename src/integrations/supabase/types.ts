@@ -55,60 +55,6 @@ export type Database = {
           },
         ]
       }
-      Investisseur: {
-        Row: {
-          created_at: string
-          id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-        }
-        Relationships: []
-      }
-      portefeuilles: {
-        Row: {
-          created_at: string
-          date_creation: string
-          description: string | null
-          devise: string | null
-          id: string
-          montant_total: number | null
-          nom_portefeuille: string
-          statut: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          date_creation?: string
-          description?: string | null
-          devise?: string | null
-          id?: string
-          montant_total?: number | null
-          nom_portefeuille: string
-          statut?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          date_creation?: string
-          description?: string | null
-          devise?: string | null
-          id?: string
-          montant_total?: number | null
-          nom_portefeuille?: string
-          statut?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       productions_quotidiennes: {
         Row: {
           created_at: string

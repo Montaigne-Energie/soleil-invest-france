@@ -251,7 +251,42 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_investissements_par_investisseur: {
+        Row: {
+          email: string | null
+          montant_total: number | null
+          nombre_parts: number | null
+          projet_id: string | null
+          projet_nom: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investissements_projet_id_fkey"
+            columns: ["projet_id"]
+            isOneToOne: false
+            referencedRelation: "projets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_investisseur_pivot: {
+        Row: {
+          email: string | null
+          parts_par_projet: Json | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      v_investisseur_totaux: {
+        Row: {
+          email: string | null
+          total_montant: number | null
+          total_parts: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

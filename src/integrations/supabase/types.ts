@@ -235,7 +235,34 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_my_investissements: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          montant_total: number
+          nombre_parts: number
+          projet_id: string
+          projet_nom: string
+          user_id: string
+        }[]
+      }
+      get_my_investisseur_pivot: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          parts_par_projet: Json
+          user_id: string
+        }[]
+      }
+      get_my_investisseur_totaux: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          email: string
+          total_montant: number
+          total_parts: number
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

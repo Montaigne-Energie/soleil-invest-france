@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from '@supabase/supabase-js';
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { getSafeErrorMessage } from "@/utils/logger";
 
 interface SignUpData {
   email: string;
@@ -98,19 +99,11 @@ const Auth = () => {
       });
 
       if (error) {
-        if (error.message.includes('User already registered')) {
-          toast({
-            title: "Compte existant",
-            description: "Un compte avec cette adresse email existe déjà. Veuillez vous connecter.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Erreur d'inscription",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Erreur d'inscription", 
+          description: getSafeErrorMessage(error),
+          variant: "destructive"
+        });
       } else {
         toast({
           title: "Inscription réussie",
@@ -121,7 +114,7 @@ const Auth = () => {
     } catch (err) {
       toast({
         title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
+        description: getSafeErrorMessage(err),
         variant: "destructive"
       });
     } finally {
@@ -138,19 +131,11 @@ const Auth = () => {
       });
 
       if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: "Erreur de connexion",
-            description: "Email ou mot de passe incorrect",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Erreur de connexion",
-            description: error.message,
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Erreur de connexion",
+          description: getSafeErrorMessage(error),
+          variant: "destructive"
+        });
       } else {
         toast({
           title: "Connexion réussie",
@@ -160,7 +145,7 @@ const Auth = () => {
     } catch (err) {
       toast({
         title: "Erreur",
-        description: "Une erreur inattendue s'est produite",
+        description: getSafeErrorMessage(err),
         variant: "destructive"
       });
     } finally {

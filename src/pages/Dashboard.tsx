@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useInactivityTimer } from "@/hooks/useInactivityTimer";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { InactivityModal } from "@/components/InactivityModal";
+import { useInactivityTimer } from "@/hooks/useInactivityTimer";
+import { logger, getSafeErrorMessage } from "@/utils/logger";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from '@supabase/supabase-js';
 import { 
@@ -16,7 +18,6 @@ import {
   Sun,
   Wind
 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 
 interface ProjetBase {
   id: string;
@@ -109,10 +110,10 @@ const Dashboard = () => {
 
   const loadDashboardData = async () => {
     try {
-      console.log('Début chargement dashboard pour user:', user?.id);
+      logger.log('Début chargement dashboard pour user:', user?.id);
       
       if (!user?.id) {
-        console.log('Pas de user ID, arrêt du chargement');
+        logger.log('Pas de user ID, arrêt du chargement');
         setIsLoading(false);
         return;
       }
@@ -127,10 +128,11 @@ const Dashboard = () => {
         .eq('user_id', user.id)
         .limit(3);
       
-      console.log('Résultat requête investissements:', { investissements, error });
+      logger.log('Résultat requête investissements:', { investissements, error });
       
       if (error) {
-        console.error('Erreur SQL:', error);
+        logger.error('Erreur SQL:', error);
+        throw error;
       }
       
       setInvestissements(investissements || []);
@@ -176,7 +178,12 @@ const Dashboard = () => {
       setIsLoading(false);
 
     } catch (error) {
-      console.error('Erreur chargement:', error);
+      logger.error('Erreur chargement:', error);
+      toast({
+        title: "Erreur",
+        description: getSafeErrorMessage(error),
+        variant: "destructive"
+      });
       setInvestissements([]);
       setProjetsDisponibles([]);
       setProductionData([]);
